@@ -4,146 +4,152 @@
 
 # 🏀 NBA Analyst AI — SportSee
 
-**Assistant conversationnel RAG + SQL, évalué objectivement avec RAGAS**
-*Projet OpenClassrooms P10 — « Évaluez les performances d'un LLM »*
+**A RAG + SQL conversational assistant, objectively evaluated with RAGAS**
+*OpenClassrooms project P10 — "Evaluate the performance of an LLM"*
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![UV](https://img.shields.io/badge/UV-géré-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
+[![UV](https://img.shields.io/badge/UV-managed-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
 [![Pydantic AI](https://img.shields.io/badge/Pydantic_AI-agent-E92063?logo=pydantic&logoColor=white)](https://ai.pydantic.dev/)
-[![Mistral](https://img.shields.io/badge/Mistral-LLM_%2B_juge-FA520F)](https://mistral.ai/)
-[![RAGAS](https://img.shields.io/badge/RAGAS-évaluation-4B8BBE)](https://docs.ragas.io/)
+[![Mistral](https://img.shields.io/badge/Mistral-LLM_%2B_judge-FA520F)](https://mistral.ai/)
+[![RAGAS](https://img.shields.io/badge/RAGAS-evaluation-4B8BBE)](https://docs.ragas.io/)
 
-**Fidélité des réponses ×2.5, précision du contexte ×4.3** — mesuré par RAGAS sur
-60 questions métier, en remplaçant le retrieval texte des données chiffrées par un
-**tool SQL** routé par un **agent**.
+**Answer faithfulness ×2.5, context precision ×4.3** — measured by RAGAS across
+60 business questions, by replacing text retrieval over numerical data with a
+**SQL tool** routed by an **agent**.
 
-[📊 Rapport comparatif](eval/reports/comparatif_baseline_v2.html) ·
-[🧪 Harness RAGAS](eval/evaluate_ragas.py) ·
-[🤖 Agent](src/sportsee_rag/agent/agent.py)
+### [📊 Read the evaluation report →](https://kl38.github.io/OC_P10_RAG_NBA-comments-and-stats/)
+
+*Interactive, no install: per-category radars and a question-by-question verdict
+for the three systems compared.*
 
 </div>
 
+<!-- TODO: add docs/demo.gif here once recorded — the agent picking SQL for a
+     numerical question and RAG for an opinion one, with the tool badge visible. -->
+
 ---
 
-<details>
-<summary>📑 Sommaire</summary>
+## 📊 Results
 
-- [À propos du projet](#-à-propos-du-projet)
-- [Résultats](#-résultats)
-- [Architecture](#-architecture)
-- [Démarrage](#-démarrage)
-- [Utilisation](#-utilisation)
-- [Évaluation RAGAS](#-évaluation-ragas)
-- [Tests](#-tests)
-- [Structure du dépôt](#-structure-du-dépôt)
-- [Limites connues](#-limites-connues)
+Mean RAGAS scores (60 questions, excluding the `out_of_scope` category,
+judge `mistral-small`) — prototype vs. final agent:
 
-</details>
-
-## 📌 À propos du projet
-
-SportSee dispose d'un prototype d'assistant NBA qui répond bien aux questions
-*textuelles* (débats de fans) mais **échoue sur les questions chiffrées** : les
-statistiques Excel, aplaties en texte puis découpées en chunks, sont illisibles
-pour le retrieval sémantique.
-
-Ce dépôt couvre le cycle complet demandé par le brief :
-
-1. **Auditer** le prototype avec un harnais d'évaluation **RAGAS** (60 questions
-   métier, 6 catégories : texte, chiffré simple/complexe, bruité, hors-couverture, mixte) ;
-2. **Enrichir** le système : base SQL validée par **Pydantic** + tool **NL→SQL**
-   (LangChain), routés par un **agent Pydantic AI** ;
-3. **Ré-évaluer** avec le même harnais et analyser le delta avant/après,
-   le tout tracé pas à pas dans **Logfire**.
-
-Deux sources de données, deux outils :
-
-| Source | Contenu | Outil |
-|---|---|---|
-| `Match 1-4.pdf` | threads Reddit de fans (scans → OCR) | 🔎 RAG (FAISS, cosinus) |
-| `regular+NBA.xlsx` | stats d'une saison régulière (569 joueurs) | 🗃️ SQL (SELECT only) |
-
-L'agent choisit seul, pour chaque question, l'outil à interroger — RAG, SQL, ou
-les deux — et répond **uniquement** à partir de leurs résultats.
-
-<p align="right">(<a href="#readme-top">retour en haut</a>)</p>
-
-## 📊 Résultats
-
-Scores RAGAS moyens (60 questions, hors catégorie `hors_couverture`,
-juge `mistral-small`) — prototype vs agent final :
-
-| Métrique | Prototype (baseline) | Agent RAG + SQL (v2) | Δ |
+| Metric | Prototype (baseline) | RAG + SQL agent (v2) | Δ |
 |---|---:|---:|---:|
 | `faithfulness` | 0.36 | **0.88** | **×2.5** |
 | `context_precision` | 0.17 | **0.71** | **×4.3** |
 | `context_recall` | 0.26 | **0.76** | **×2.9** |
 | `answer_relevancy` | 0.76 | **0.83** | +0.07 |
 
-Trois systèmes mesurés pour isoler chaque effet :
+Three systems were measured, to isolate each effect:
 
-- **`baseline`** — RAG texte seul, Excel aplati dans l'index (reproduit le bug du prototype) ;
-- **`enriched`** — agent RAG + SQL sur l'index complet : isole **l'apport du tool SQL** ;
-- **`enriched_v2`** — même agent sur un index **PDF-only** (l'Excel ne passe plus que
-  par SQL) + **garde-fou de périmètre** : le run de référence.
+- **`baseline`** — text-only RAG with the Excel flattened into the index
+  (reproduces the prototype's bug);
+- **`enriched`** — RAG + SQL agent over the full index: isolates **what the SQL
+  tool contributes**;
+- **`enriched_v2`** — same agent over a **PDF-only** index (the Excel is now
+  reachable through SQL alone) plus a **scope guard**: the reference run.
 
-➡️ Analyse détaillée, radars par catégorie et verdicts question par question :
-[`eval/reports/comparatif_baseline_v2.html`](eval/reports/comparatif_baseline_v2.html).
+➡️ **[Full report: per-category radars and question-by-question verdicts](https://kl38.github.io/OC_P10_RAG_NBA-comments-and-stats/)**
+— also available as a file in [`eval/reports/`](eval/reports/).
 
-<p align="right">(<a href="#readme-top">retour en haut</a>)</p>
+---
+
+<details>
+<summary>📑 Table of contents</summary>
+
+- [Results](#-results)
+- [About the project](#-about-the-project)
+- [Architecture](#-architecture)
+- [Getting started](#-getting-started)
+- [Usage](#-usage)
+- [RAGAS evaluation](#-ragas-evaluation)
+- [Tests](#-tests)
+- [Repository layout](#-repository-layout)
+- [Known limitations](#-known-limitations)
+
+</details>
+
+## 📌 About the project
+
+SportSee has a prototype NBA assistant that answers *textual* questions well
+(fan debates) but **fails on numerical ones**: the Excel statistics, flattened
+into text and then split into chunks, are unreadable to semantic retrieval.
+
+This repository covers the full cycle the brief asks for:
+
+1. **Audit** the prototype with a **RAGAS** evaluation harness (60 business
+   questions, 6 categories: textual, simple/complex numerical, noisy,
+   out-of-scope, mixed);
+2. **Extend** the system: a SQL database validated by **Pydantic** plus an
+   **NL→SQL** tool (LangChain), routed by a **Pydantic AI agent**;
+3. **Re-evaluate** with the same harness and analyse the before/after delta,
+   traced step by step in **Logfire**.
+
+Two data sources, two tools:
+
+| Source | Content | Tool |
+|---|---|---|
+| `Match 1-4.pdf` | Reddit fan threads (scans → OCR) | 🔎 RAG (FAISS, cosine) |
+| `regular+NBA.xlsx` | one regular season of stats (569 players) | 🗃️ SQL (SELECT only) |
+
+For every question the agent decides on its own which tool to query — RAG, SQL,
+or both — and answers **only** from what they return.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## 🏗️ Architecture
 
 ```mermaid
 %%{init: {"theme":"base","themeVariables":{"fontFamily":"Segoe UI, system-ui, sans-serif","fontSize":"13px","primaryColor":"#ffffff","primaryTextColor":"#1c2333","primaryBorderColor":"#94a3b8","lineColor":"#64748b","edgeLabelBackground":"#f1f5f9","clusterBkg":"#f8fafc","clusterBorder":"#cbd5e1"},"flowchart":{"curve":"basis","nodeSpacing":45,"rankSpacing":55}}}%%
 flowchart TD
-    %% ============ 1. PRÉPARATION (hors-ligne) ============
-    subgraph PREP["🛠️ PRÉPARATION — hors-ligne, scripts « un seul run »"]
+    %% ============ 1. PREPARATION (offline) ============
+    subgraph PREP["🛠️ PREPARATION — offline, run-once scripts"]
         direction TB
         subgraph DBL["scripts/load_excel_to_db.py"]
             direction TB
-            XLS["📊 <b>regular+NBA.xlsx</b><br/><i>feuilles Equipe · Données NBA</i>"]
-            READ["<b>Lecture pandas</b><br/><i>header=1 · quirks du classeur</i>"]
-            VALID["<b>Validation Pydantic</b><br/><i>TeamRow / PlayerRow · fail-fast</i>"]
-            DDL["<b>Insertion SQLAlchemy</b><br/><i>drop/create + intégrité référentielle</i>"]
+            XLS["📊 <b>regular+NBA.xlsx</b><br/><i>sheets Equipe · Données NBA</i>"]
+            READ["<b>pandas read</b><br/><i>header=1 · workbook quirks</i>"]
+            VALID["<b>Pydantic validation</b><br/><i>TeamRow / PlayerRow · fail-fast</i>"]
+            DDL["<b>SQLAlchemy insert</b><br/><i>drop/create + referential integrity</i>"]
             XLS --> READ --> VALID --> DDL
         end
         subgraph IDX["scripts/build_index.py"]
             direction TB
-            PDF["📄 <b>4 PDF Match</b><br/><i>threads Reddit scannés</i>"]
-            LOAD["<b>OCR EasyOCR</b><br/><i>lazy · GPU</i>"]
-            SPLIT["<b>LangChain Chunking 1500 / 150</b><br/><i>RecursiveCharacterTextSplitter</i>"]
+            PDF["📄 <b>4 Match PDFs</b><br/><i>scanned Reddit threads</i>"]
+            LOAD["<b>EasyOCR</b><br/><i>lazy · GPU</i>"]
+            SPLIT["<b>LangChain chunking 1500 / 150</b><br/><i>RecursiveCharacterTextSplitter</i>"]
             EMB1["<b>Embeddings</b> · 🧠 <b>mistral-embed</b><br/><i>batch · throttle · retry 429</i>"]
-            FAISSB["<b>Index FAISS</b> · cosinus<br/><i>IndexFlatIP + normalize_L2</i>"]
+            FAISSB["<b>FAISS index</b> · cosine<br/><i>IndexFlatIP + normalize_L2</i>"]
             PDF --> LOAD --> SPLIT --> EMB1 --> FAISSB
         end
     end
 
-    %% ============ 2. ARTEFACTS PERSISTÉS ============
-    SQLDB[("🗄️ <b>PostgreSQL / Supabase</b><br/><i>players · teams — fallback SQLite</i>")]
+    %% ============ 2. PERSISTED ARTEFACTS ============
+    SQLDB[("🗄️ <b>PostgreSQL / Supabase</b><br/><i>players · teams — SQLite fallback</i>")]
     VDB[("📦 <b>vector_db/</b><br/><i>faiss_index.idx · chunks.jsonl</i>")]
     DDL --> SQLDB
     FAISSB --> VDB
 
-    %% ============ 3. RUNTIME (1 question) ============
-    subgraph RUN["⚡ RUNTIME — 1 question"]
+    %% ============ 3. RUNTIME (one question) ============
+    subgraph RUN["⚡ RUNTIME — one question"]
         direction TB
         TSQL["🗃️ <b>query_player_stats</b><br/>NL→SQL · 🧠 <b>mistral-small</b><br/><i>few-shot · ensure_read_only</i><br/><b>LangChain SQLDatabase · SQLAlchemy</b>"]
-        TRAG["🔎 <b>search_match_commentary</b><br/>top-k 5 · 🧠 <b>mistral-embed</b><br/><i>question verbatim</i>"]
-        AGENT{{"🤖 <b>Agent Pydantic AI</b><br/><b>routing + synthèse</b><br/><i>🧠 mistral-small · endpoint OpenAI-compat</i>"}}
+        TRAG["🔎 <b>search_match_commentary</b><br/>top-k 5 · 🧠 <b>mistral-embed</b><br/><i>verbatim question</i>"]
+        AGENT{{"🤖 <b>Pydantic AI agent</b><br/><b>routing + synthesis</b><br/><i>🧠 mistral-small · OpenAI-compatible endpoint</i>"}}
         UI["💬 <b>Streamlit</b><br/><i>streamlit_app.py</i>"]
-        USER(["👤 <b>Utilisateur</b>"])
+        USER(["👤 <b>User</b>"])
 
-        TSQL <-->|"chiffres · stats · agrégats"| AGENT
-        TRAG <-->|"texte · opinions · débats"| AGENT
+        TSQL <-->|"numbers · stats · aggregates"| AGENT
+        TRAG <-->|"text · opinions · debates"| AGENT
         AGENT -->|"<b>RagAnswer</b><br/><i>answer · sources · used_tool</i>"| UI
         UI -->|"question"| AGENT
-        UI -->|"réponse + badge outil"| USER
+        UI -->|"answer + tool badge"| USER
         USER -->|"question"| UI
     end
 
-    SQLDB -. "rôle SELECT-only" .-> TSQL
-    VDB -. "chargé au démarrage" .-> TRAG
+    SQLDB -. "SELECT-only role" .-> TSQL
+    VDB -. "loaded at startup" .-> TRAG
 
     %% ============ STYLES ============
     classDef data fill:#f1f5f9,stroke:#94a3b8,color:#1c2333;
@@ -169,103 +175,111 @@ flowchart TD
     linkStyle 15,16 stroke:#ea580c,stroke-width:1.5px
 ```
 
-> 🟡 nœud jaune = appel Mistral · 🟠 cylindre orange = stockage persistant ·
-> pointillés orange = artefact construit hors-ligne, consommé au runtime.
+> 🟡 yellow node = Mistral call · 🟠 orange cylinder = persistent storage ·
+> orange dashes = artefact built offline, consumed at runtime.
 
-**Sécurité DB** : l'application tourne avec un rôle **SELECT-only**
-(`DATABASE_URL_READONLY`) ; seul le script de chargement utilise le rôle admin.
-Défense en profondeur (garde applicatif + rôle PostgreSQL), vérifiée par
+**Database security**: the application runs under a **SELECT-only** role
+(`DATABASE_URL_READONLY`); only the loading script uses the admin role. Defence
+in depth (application guard + PostgreSQL role), verified by
 [`scripts/check_db_readonly.py`](scripts/check_db_readonly.py).
 
 ### Stack
 
 Python 3.12 · UV · Pydantic AI · Mistral · FAISS · LangChain (`SQLDatabase`) ·
-SQLAlchemy · PostgreSQL/Supabase (repli SQLite) · RAGAS · Pydantic Logfire ·
+SQLAlchemy · PostgreSQL/Supabase (SQLite fallback) · RAGAS · Pydantic Logfire ·
 Streamlit · EasyOCR/PyTorch.
 
-<p align="right">(<a href="#readme-top">retour en haut</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## 🚀 Démarrage
+## 🚀 Getting started
 
-### Prérequis
+> **On reproducibility.** The source corpus — four scanned match PDFs and the
+> season workbook — is OpenClassrooms coursework material and is **not
+> redistributed here**; `data/`, `vector_db/` and `db/` are git-ignored. The
+> steps below therefore document the pipeline rather than offer a clone-and-run
+> path. To judge the outcome without running anything, read
+> **[the evaluation report](https://kl38.github.io/OC_P10_RAG_NBA-comments-and-stats/)**.
 
-- **Python 3.12** et **[UV](https://docs.astral.sh/uv/)**
-- Une **clé API Mistral** (gratuite) — <https://console.mistral.ai/>
-- *(optionnel)* un **GPU CUDA** : accélère l'OCR à l'indexation (sinon CPU, plus lent)
-- *(optionnel)* un projet **Supabase / PostgreSQL** : sinon repli automatique sur SQLite local
+### Prerequisites
+
+- **Python 3.12** and **[UV](https://docs.astral.sh/uv/)**
+- A **Mistral API key** (free tier) — <https://console.mistral.ai/>
+- *(optional)* a **CUDA GPU**: speeds up OCR at indexing time (CPU works, slower)
+- *(optional)* a **Supabase / PostgreSQL** project: otherwise the project falls
+  back to local SQLite automatically
 
 ### Installation
 
 ```powershell
-# 1. Dépendances (environnement reproductible)
+# 1. Dependencies (reproducible environment)
 uv sync
 
-# 2. Secrets : copier le modèle et renseigner la clé Mistral
+# 2. Secrets: copy the template and fill in the Mistral key
 Copy-Item .env.example .env
-# puis éditer .env → MISTRAL_API_KEY=...  (les autres variables sont optionnelles)
+# then edit .env → MISTRAL_API_KEY=...  (every other variable is optional)
 ```
 
-| Variable (`.env`) | Requis | Rôle |
+| Variable (`.env`) | Required | Role |
 |---|---|---|
-| `MISTRAL_API_KEY` | ✅ | génération, embeddings, juge RAGAS |
-| `DATABASE_URL` | ⚪ | rôle **admin** — chargement Excel → SQL uniquement |
-| `DATABASE_URL_READONLY` | ⚪ | rôle **SELECT-only** — runtime de l'app |
-| `LOGFIRE_TOKEN` | ⚪ | traces cloud (sinon Logfire tourne en local) |
+| `MISTRAL_API_KEY` | ✅ | generation, embeddings, RAGAS judge |
+| `DATABASE_URL` | ⚪ | **admin** role — Excel → SQL loading only |
+| `DATABASE_URL_READONLY` | ⚪ | **SELECT-only** role — application runtime |
+| `LOGFIRE_TOKEN` | ⚪ | cloud traces (otherwise Logfire runs locally) |
 
-> Sans `DATABASE_URL`, le projet bascule sur une base **SQLite** locale
-> (`db/nba.sqlite`) — pratique pour tester hors-ligne.
+> Without `DATABASE_URL`, the project falls back to a local **SQLite** database
+> (`db/nba.sqlite`) — handy for offline testing.
 
-### Mise en route
+### Build the artefacts
 
 ```powershell
-# 3. Construire l'index vectoriel (OCR des PDF + embeddings)
-# index complet (PDF + Excel aplati) — requis pour les runs RAGAS baseline/enriched :
+# 3. Build the vector index (PDF OCR + embeddings)
+# full index (PDF + flattened Excel) — required for the baseline/enriched RAGAS runs:
 uv run python scripts/build_index.py
-# index PDF-only — requis par l'app Streamlit et le run enriched_v2 :
+# PDF-only index — required by the Streamlit app and the enriched_v2 run:
 uv run python scripts/build_index.py --pdf-only
 
-# 4. Charger les stats Excel dans la base SQL
+# 4. Load the Excel stats into the SQL database
 uv run python scripts/load_excel_to_db.py
 
-# (optionnel) vérifier que le rôle applicatif est bien en lecture seule
+# (optional) check that the application role really is read-only
 uv run python scripts/check_db_readonly.py
 ```
 
-<p align="right">(<a href="#readme-top">retour en haut</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## 💬 Utilisation
+## 💬 Usage
 
 ```powershell
-# Interface de chat (recommandé)
+# Chat interface (recommended)
 uv run streamlit run streamlit_app.py
 
-# …ou en ligne de commande, pour une question ponctuelle
-uv run python scripts/ask.py "Quelles équipes ont impressionné en playoffs ?"
+# …or from the command line, for a one-off question
+uv run python scripts/ask.py "Which teams impressed in the playoffs?"
 ```
 
-Chaque réponse affiche **l'outil utilisé** (RAG, SQL, les deux — ou aucun,
-signalé comme réponse sans preuve) et ses **sources**.
+Every answer shows **which tool was used** (RAG, SQL, both — or none, flagged as
+an answer without evidence) together with its **sources**.
 
-## 📏 Évaluation RAGAS
+## 📏 RAGAS evaluation
 
 ```powershell
-# Prototype d'origine (RAG texte seul, Excel aplati dans l'index)
+# Original prototype (text-only RAG, Excel flattened into the index)
 uv run python eval/evaluate_ragas.py --system baseline
 
-# Agent RAG + SQL sur l'index complet
+# RAG + SQL agent over the full index
 uv run python eval/evaluate_ragas.py --system enriched
 
-# Agent RAG + SQL sur l'index PDF-only + garde-fou de périmètre (run de référence)
-# → nécessite l'index PDF-only : build_index.py --pdf-only (cf. Mise en route)
+# RAG + SQL agent over the PDF-only index + scope guard (reference run)
+# → needs the PDF-only index: build_index.py --pdf-only (see above)
 uv run python eval/evaluate_ragas.py --system enriched_v2
 
-# Ajouter --limit 2 pour un test rapide (2 questions)
+# Add --limit 2 for a quick smoke run (2 questions)
 ```
 
-Le harnais est **strictement identique** entre les trois systèmes (mêmes
-questions, même juge, mêmes métriques) : seul le flag `--system` change, donc le
-delta mesure bien le système et non le protocole. Chaque run écrit un rapport
-JSON + tableau Markdown dans [`eval/reports/`](eval/reports/).
+The harness is **strictly identical** across the three systems (same questions,
+same judge, same metrics): only the `--system` flag changes, so the delta
+measures the system and not the protocol. Each run writes a JSON report and a
+Markdown table to [`eval/reports/`](eval/reports/).
 
 ## 🧪 Tests
 
@@ -273,39 +287,41 @@ JSON + tableau Markdown dans [`eval/reports/`](eval/reports/).
 uv run pytest
 ```
 
-Approche pragmatique : le déterministe (schéma SQL, garde-fous, parsing,
-routing de l'agent) est couvert par des tests unitaires ; les appels LLM sont
-mockés (`TestModel` de Pydantic AI, fakes injectés) — aucun test ne touche le réseau.
+A pragmatic split: everything deterministic (SQL schema, guards, parsing, agent
+routing) is covered by unit tests; LLM calls are mocked (Pydantic AI's
+`TestModel`, injected fakes) — no test touches the network.
 
-<p align="right">(<a href="#readme-top">retour en haut</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## 🗂️ Structure du dépôt
+## 🗂️ Repository layout
 
 ```
 src/sportsee_rag/
-  ingestion/     chargement & parsing du corpus (PDF/OCR, Excel, docx)
-  retrieval/     index FAISS (cosinus) + recherche
-  rag/           pipeline RAG (retrieve → prompt → réponse)
-  sql/           schéma, chargement Excel→SQL, tool SQL (SELECT-only)
-  agent/         agent Pydantic AI (routing RAG / SQL)
-  llm/           client Mistral (retry/backoff)
-  config.py      configuration typée (pydantic-settings)
+  ingestion/     corpus loading & parsing (PDF/OCR, Excel, docx)
+  retrieval/     FAISS index (cosine) + search
+  rag/           RAG pipeline (retrieve → prompt → answer)
+  sql/           schema, Excel→SQL loading, SQL tool (SELECT-only)
+  agent/         Pydantic AI agent (RAG / SQL routing)
+  llm/           Mistral client (retry/backoff)
+  config.py      typed configuration (pydantic-settings)
   observability  Logfire
-scripts/         entrypoints : build_index, load_excel_to_db, ask, check_db_readonly
-eval/            harness RAGAS, questions.yaml, rapports & comparatifs
-tests/           tests unitaires offline (pytest)
-data/            corpus source (4 PDF de match + classeur NBA)
+scripts/         entrypoints: build_index, load_excel_to_db, ask, check_db_readonly
+eval/            RAGAS harness, questions.yaml, reports & comparisons
+docs/            published evaluation report (GitHub Pages)
+tests/           offline unit tests (pytest)
+data/            source corpus — git-ignored, not redistributed
 ```
 
-## ⚠️ Limites connues
+## ⚠️ Known limitations
 
-- **PDF de match = scans OCRisés** (threads Reddit) : texte bruité par nature →
-  plafonne certaines métriques de contexte même quand la réponse est correcte.
-- **Juge RAGAS = `mistral-small`** (gratuit), pas un modèle frontière : les scores
-  sont *indicatifs* ; le signal fiable est le **delta** baseline → enrichi.
-- **Périmètre = une seule saison, totaux agrégés** : pas de dimension temporelle ni
-  de détail par match dans les données source — le schéma se limite donc à
-  `teams` + `players`, et les questions hors-schéma (par match, domicile/extérieur,
-  salaires…) sont **refusées** par l'agent plutôt qu'inventées.
+- **Match PDFs are OCR'd scans** (Reddit threads): the text is noisy by nature,
+  which caps some context metrics even when the answer is correct.
+- **The RAGAS judge is `mistral-small`** (free tier), not a frontier model: the
+  scores are *indicative*; the reliable signal is the **delta** from baseline to
+  enriched.
+- **Scope is a single season of aggregated totals**: the source data carries no
+  temporal dimension and no per-match detail, so the schema stops at `teams` +
+  `players`, and out-of-schema questions (per match, home/away, salaries…) are
+  **refused** by the agent rather than invented.
 
-<p align="right">(<a href="#readme-top">retour en haut</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
