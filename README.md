@@ -24,8 +24,13 @@ for the three systems compared.*
 
 </div>
 
-<!-- TODO: add docs/demo.gif here once recorded — the agent picking SQL for a
-     numerical question and RAG for an opinion one, with the tool badge visible. -->
+<div align="center">
+  <img src="docs/demo.gif" width="900"
+       alt="The agent answering a question that needs both tools: fan commentary from the PDF corpus and a shooting percentage from the SQL database" />
+  <br />
+  <em>One question, both tools: what fans say about a player comes from the PDF
+  corpus, his 3-point percentage from SQL — and the answer names its sources.</em>
+</div>
 
 ---
 
