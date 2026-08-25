@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# 🏀 NBA Analyst AI — SportSee
+# NBA Analyst AI — SportSee
 
 **A RAG + SQL conversational assistant, objectively evaluated with RAGAS**
 *OpenClassrooms project P10 — "Evaluate the performance of an LLM"*
