@@ -122,7 +122,7 @@ hf-xet==1.4.3 ; platform_machine == 'AMD64' or platform_machine == 'aarch64' or 
     # via huggingface-hub
 httpcore==1.0.9
     # via httpx
-httpcore2==2.3.0
+httpcore2==2.10.0
     # via httpx2
 httptools==0.8.0
     # via streamlit
