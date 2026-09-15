@@ -18,7 +18,10 @@ wheels/
 /data/
 
 # FAISS vector store (build artifact, regenerable via scripts/build_index.py)
-/vector_db/
+# Exception: the PDF-only index used by the Streamlit app is versioned for deployment
+/vector_db/*
+!/vector_db/faiss_index_pdf.idx
+!/vector_db/document_chunks_pdf.jsonl
 
 # Local SQLite fallback DB (regenerable via scripts/load_excel_to_db.py)
 /db/
