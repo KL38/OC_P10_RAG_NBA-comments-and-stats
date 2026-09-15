@@ -37,6 +37,20 @@ _TOOL_LABELS = {
     "none": "⚠️ aucun outil (réponse du modèle seul)",
 }
 
+# Clickable examples (short label -> full question), one per routing case
+_EXAMPLES = {
+    "🔎 Ce que les fans reprochent à la NBA": (
+        "Quel reproche les fans adressent-ils à la NBA concernant la promotion des playoffs ?"
+    ),
+    "🗃️ Points cumulés du top 10 des marqueurs": (
+        "Quelle est la somme des points marqués par les 10 meilleurs marqueurs de la ligue ?"
+    ),
+    "🔎+🗃️ SGA : critiques des fans et points marqués": (
+        "Que reprochent certains fans à Shai Gilgeous-Alexander, "
+        "et combien de points a-t-il marqués cette saison ?"
+    ),
+}
+
 
 @st.cache_resource
 def get_manager() -> VectorStoreManager:
@@ -67,7 +81,9 @@ st.title("🏀 NBA Analyst AI")
 st.caption(f"Assistant RAG + SQL SportSee · modèle : {settings.chat_model}")
 
 with st.sidebar:
-    k = st.slider("Chunks récupérés (k)", min_value=1, max_value=10, value=settings.search_k)
+    k = st.slider(
+        "Chunks récupérés (k)", min_value=1, max_value=10, value=settings.search_k
+    )
 
 manager = get_manager()
 if manager.index is None:
@@ -90,7 +106,16 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-if prompt := st.chat_input("Posez votre question NBA..."):
+prompt = st.chat_input("Posez votre question NBA...")
+
+# Examples are offered only while the chat holds just the welcome message
+examples = st.empty()
+if not prompt and len(st.session_state.messages) == 1:
+    if selected := examples.pills("Exemples de questions", list(_EXAMPLES)):
+        prompt = _EXAMPLES[selected]
+
+if prompt:
+    examples.empty()  # hide the examples as soon as a question is sent
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.write(prompt)

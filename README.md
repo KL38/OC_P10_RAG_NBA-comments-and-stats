@@ -17,10 +17,10 @@
 60 business questions, by replacing text retrieval over numerical data with a
 **SQL tool** routed by an **agent**.
 
-### [📊 Read the evaluation report →](https://kl38.github.io/OC_P10_RAG_NBA-comments-and-stats/)
+### [🏀 Try the live app](https://ocp10ragnba-comments-and-stats-h8erxkzbpxjzfbzwzg7yx2.streamlit.app/) &nbsp;|&nbsp; [📊 Read the evaluation report](https://kl38.github.io/OC_P10_RAG_NBA-comments-and-stats/)
 
-*Interactive, no install: per-category radars and a question-by-question verdict
-for the three systems compared.*
+*No install needed: chat with the deployed agent, or browse per-category radars
+and a question-by-question verdict for the three systems compared.*
 
 </div>
 
@@ -198,12 +198,13 @@ Streamlit · EasyOCR/PyTorch.
 
 ## 🚀 Getting started
 
-> **On reproducibility.** The source corpus — four scanned match PDFs and the
-> season workbook — is OpenClassrooms coursework material and is **not
-> redistributed here**; `data/`, `vector_db/` and `db/` are git-ignored. The
-> steps below therefore document the pipeline rather than offer a clone-and-run
-> path. To judge the outcome without running anything, read
-> **[the evaluation report](https://kl38.github.io/OC_P10_RAG_NBA-comments-and-stats/)**.
+> **On reproducibility.** The source files (four scanned match PDFs and the
+> season workbook) are OpenClassrooms coursework material and are **not
+> redistributed here**: `data/` and `db/` are git-ignored, and `vector_db/` only
+> holds the PDF-only index the deployed app needs. The steps below therefore
+> document the pipeline rather than offer a clone-and-run path. To judge the
+> outcome without running anything, **[try the live app](https://ocp10ragnba-comments-and-stats-h8erxkzbpxjzfbzwzg7yx2.streamlit.app/)**
+> or read **[the evaluation report](https://kl38.github.io/OC_P10_RAG_NBA-comments-and-stats/)**.
 
 ### Prerequisites
 
