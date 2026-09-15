@@ -405,6 +405,8 @@ protobuf==6.33.6
     #   streamlit
 psycopg==3.3.4
     # via oc-p10
+psycopg-binary==3.3.4 ; implementation_name != 'pypy'
+    # via psycopg
 pyarrow==24.0.0
     # via
     #   datasets
