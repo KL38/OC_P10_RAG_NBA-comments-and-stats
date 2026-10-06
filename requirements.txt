@@ -218,7 +218,7 @@ langsmith==0.8.11
     #   langchain-core
 lazy-loader==0.5
     # via scikit-image
-litellm==1.88.1
+litellm==1.88.6
     # via oc-p10
 logfire==4.35.0
     # via oc-p10
