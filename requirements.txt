@@ -63,7 +63,7 @@ cuda-toolkit==12.8.1 ; sys_platform == 'linux'
     # via torch
 dataclasses-json==0.6.7
     # via langchain-community
-datasets==5.0.0
+datasets==5.0.1
     # via ragas
 dill==0.4.1
     # via
