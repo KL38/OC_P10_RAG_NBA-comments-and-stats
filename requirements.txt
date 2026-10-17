@@ -428,7 +428,7 @@ pydantic==2.13.4
     #   pydantic-graph
     #   pydantic-settings
     #   ragas
-pydantic-ai-slim==1.106.0
+pydantic-ai-slim==1.107.7
     # via oc-p10
 pydantic-core==2.46.4
     # via
