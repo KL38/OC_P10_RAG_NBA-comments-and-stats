@@ -87,7 +87,7 @@ faiss-cpu==1.14.2
     # via oc-p10
 fastuuid==0.14.0
     # via litellm
-filelock==3.29.1
+filelock==4.2.1
     # via
     #   datasets
     #   huggingface-hub
