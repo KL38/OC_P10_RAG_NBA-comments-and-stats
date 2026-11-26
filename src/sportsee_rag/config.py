@@ -90,7 +90,7 @@ class Settings(BaseSettings):
 
     @staticmethod
     def _as_sqlalchemy(url: str) -> str:
-        """Spell out the psycopg v3 driver in Supabase's ``postgres://`` URLs
+        """Spell out the psycopg v3 driver in plain ``postgres://`` URLs
         (SQLAlchemy would otherwise look for the absent psycopg2)."""
         for prefix in ("postgresql://", "postgres://"):
             if url.startswith(prefix):
@@ -99,7 +99,7 @@ class Settings(BaseSettings):
 
     @property
     def sqlalchemy_url(self) -> str:
-        """Admin connection URL (loader): Supabase/PostgreSQL if ``DATABASE_URL``
+        """Admin connection URL (loader): PostgreSQL (Neon) if ``DATABASE_URL``
         is set, otherwise a local SQLite file (offline fallback, used by tests).
         """
         if self.database_url:

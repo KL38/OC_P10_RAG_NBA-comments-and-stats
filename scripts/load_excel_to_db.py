@@ -1,7 +1,7 @@
 """Load the NBA Excel workbook into the SQL database — single-run entrypoint.
 
 Validates every row through Pydantic, then recreates and fills the ``teams``,
-``players`` and ``stats`` tables. Targets Supabase/PostgreSQL when
+``players`` and ``stats`` tables. Targets PostgreSQL (Neon) when
 ``DATABASE_URL`` is set in ``.env``, otherwise a local SQLite file
 (``db/nba.sqlite``).
 

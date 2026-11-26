@@ -131,7 +131,7 @@ flowchart TD
     end
 
     %% ============ 2. PERSISTED ARTEFACTS ============
-    SQLDB[("🗄️ <b>PostgreSQL / Supabase</b><br/><i>players · teams — SQLite fallback</i>")]
+    SQLDB[("🗄️ <b>PostgreSQL / Neon</b><br/><i>players · teams — SQLite fallback</i>")]
     VDB[("📦 <b>vector_db/</b><br/><i>faiss_index.idx · chunks.jsonl</i>")]
     DDL --> SQLDB
     FAISSB --> VDB
@@ -191,7 +191,7 @@ in depth (application guard + PostgreSQL role), verified by
 ### Stack
 
 Python 3.12 · UV · Pydantic AI · Mistral · FAISS · LangChain (`SQLDatabase`) ·
-SQLAlchemy · PostgreSQL/Supabase (SQLite fallback) · RAGAS · Pydantic Logfire ·
+SQLAlchemy · PostgreSQL/Neon (SQLite fallback) · RAGAS · Pydantic Logfire ·
 Streamlit · EasyOCR/PyTorch.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -209,10 +209,10 @@ Streamlit · EasyOCR/PyTorch.
 ### Prerequisites
 
 - **Python 3.12** and **[UV](https://docs.astral.sh/uv/)**
-- A **Mistral API key** (free tier) — <https://console.mistral.ai/>
+- A **Mistral API key** (pay-as-you-go credits) — <https://console.mistral.ai/>
 - *(optional)* a **CUDA GPU**: speeds up OCR at indexing time (CPU works, slower)
-- *(optional)* a **Supabase / PostgreSQL** project: otherwise the project falls
-  back to local SQLite automatically
+- *(optional)* a **PostgreSQL** database (the live app uses [Neon](https://neon.tech/)):
+  otherwise the project falls back to local SQLite automatically
 
 ### Installation
 

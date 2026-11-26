@@ -112,7 +112,7 @@ def ensure_read_only(query: str) -> None:
     """Reject anything that is not a single SELECT/CTE statement.
 
     Application-level guard only — defence in depth: the runtime DB role
-    should additionally be SELECT-only (Supabase), which no string-level
+    should additionally be SELECT-only (PostgreSQL role), which no string-level
     bypass can defeat.
     """
     if not re.match(r"^(select|with)\b", query, re.IGNORECASE):

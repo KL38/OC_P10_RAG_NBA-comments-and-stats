@@ -174,7 +174,7 @@ class LoadReport:
 
 
 def create_db_engine(settings: Settings | None = None) -> Engine:
-    """Create the SQLAlchemy engine (Supabase/PostgreSQL or local SQLite).
+    """Create the SQLAlchemy engine (PostgreSQL/Neon or local SQLite).
 
     For the SQLite fallback the parent directory is created on the fly.
     """
