@@ -31,23 +31,23 @@ logger = logging.getLogger(__name__)
 st.set_page_config(page_title="NBA Analyst AI", page_icon="🏀")
 
 _TOOL_LABELS = {
-    "rag": "🔎 RAG (commentaires de match)",
-    "sql": "🗃️ SQL (stats NBA)",
+    "rag": "🔎 RAG (match commentary)",
+    "sql": "🗃️ SQL (NBA stats)",
     "both": "🔎+🗃️ RAG + SQL",
-    "none": "⚠️ aucun outil (réponse du modèle seul)",
+    "none": "⚠️ no tool (model-only answer)",
 }
 
 # Clickable examples (short label -> full question), one per routing case
 _EXAMPLES = {
-    "🔎 Ce que les fans reprochent à la NBA": (
-        "Quel reproche les fans adressent-ils à la NBA concernant la promotion des playoffs ?"
+    "🔎 What fans criticize the NBA for": (
+        "What criticism do fans direct at the NBA regarding how the playoffs are promoted?"
     ),
-    "🗃️ Points cumulés du top 10 des marqueurs": (
-        "Quelle est la somme des points marqués par les 10 meilleurs marqueurs de la ligue ?"
+    "🗃️ Combined points of the top 10 scorers": (
+        "What is the total number of points scored by the league's top 10 scorers?"
     ),
-    "🔎+🗃️ SGA : critiques des fans et points marqués": (
-        "Que reprochent certains fans à Shai Gilgeous-Alexander, "
-        "et combien de points a-t-il marqués cette saison ?"
+    "🔎+🗃️ SGA: fan criticism and points scored": (
+        "What do some fans criticize Shai Gilgeous-Alexander for, "
+        "and how many points did he score this season?"
     ),
 }
 
@@ -78,17 +78,17 @@ def get_sql_tool() -> SqlTool:
 
 
 st.title("🏀 NBA Analyst AI")
-st.caption(f"Assistant RAG + SQL SportSee · modèle : {settings.chat_model}")
+st.caption(f"SportSee RAG + SQL assistant | model: {settings.chat_model}")
 
 with st.sidebar:
     k = st.slider(
-        "Chunks récupérés (k)", min_value=1, max_value=10, value=settings.search_k
+        "Retrieved chunks (k)", min_value=1, max_value=10, value=settings.search_k
     )
 
 manager = get_manager()
 if manager.index is None:
     st.error(
-        "Index vectoriel PDF-only introuvable. Construis-le d'abord :\n\n"
+        "PDF-only vector index not found. Build it first:\n\n"
         "`uv run python scripts/build_index.py --pdf-only`"
     )
     st.stop()
@@ -97,8 +97,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "assistant",
-            "content": "Bonjour ! Posez vos questions sur la NBA — commentaires de match "
-            "(débats de fans) ou statistiques chiffrées des joueurs.",
+            "content": "Hi! Ask me anything about the NBA: match commentary "
+            "(fan debates) or player statistics.",
         }
     ]
 
@@ -106,12 +106,12 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-prompt = st.chat_input("Posez votre question NBA...")
+prompt = st.chat_input("Ask your NBA question...")
 
 # Examples are offered only while the chat holds just the welcome message
 examples = st.empty()
 if not prompt and len(st.session_state.messages) == 1:
-    if selected := examples.pills("Exemples de questions", list(_EXAMPLES)):
+    if selected := examples.pills("Example questions", list(_EXAMPLES)):
         prompt = _EXAMPLES[selected]
 
 if prompt:
@@ -122,7 +122,7 @@ if prompt:
 
     with st.chat_message("assistant"):
         try:
-            with st.spinner("Routing + recherche + génération..."):
+            with st.spinner("Routing + retrieval + generation..."):
                 answer = ask_agent(
                     AskRequest(question=prompt, k=k),
                     agent=get_agent(),
@@ -130,7 +130,7 @@ if prompt:
                     sql_tool=get_sql_tool(),
                 )
             st.write(answer.answer)
-            st.caption(f"Outil utilisé : {_TOOL_LABELS[answer.used_tool]}")
+            st.caption(f"Tool used: {_TOOL_LABELS[answer.used_tool]}")
             if answer.sources:
                 with st.expander(f"Sources ({len(answer.sources)})"):
                     for source in dict.fromkeys(answer.sources):  # de-duplicated
@@ -140,7 +140,7 @@ if prompt:
             # Driver/SDK exceptions can embed the connection string or the
             # failing query — never surface them to the user.
             logger.exception("Agent run failed")
-            content = "⚠️ Erreur technique. Réessayez dans un instant."
+            content = "⚠️ Technical error. Please try again in a moment."
             st.error(content)
 
     st.session_state.messages.append({"role": "assistant", "content": content})

@@ -61,7 +61,7 @@ Règles de réponse :
 - Ne présente jamais un résultat comme autre chose que ce que la requête a réellement
   calculé (un total de saison reste un total de saison et un moyenne sur une saison 
   reste une moyenne sur la saison).
-- Réponds en français, de façon concise et factuelle."""
+- Réponds dans la langue de la question, de façon concise et factuelle."""
 
 
 _NO_CONTEXT = "Aucune information pertinente trouvée dans les commentaires de match pour cette question."
@@ -81,7 +81,9 @@ class MistralCompatChatModel(OpenAIChatModel):
     1.106.0, still on main as of 2026-06) — re-check on upgrade.
     """
 
-    def _validate_completion(self, response: chat.ChatCompletion) -> chat.ChatCompletion:
+    def _validate_completion(
+        self, response: chat.ChatCompletion
+    ) -> chat.ChatCompletion:
         for choice in response.choices:
             content = choice.message.content
             if isinstance(content, list):
@@ -118,7 +120,9 @@ class AgentDeps:
     trace: AgentTrace
 
 
-def build_agent(model: Model | None = None, settings: Settings | None = None) -> Agent[AgentDeps, str]:
+def build_agent(
+    model: Model | None = None, settings: Settings | None = None
+) -> Agent[AgentDeps, str]:
     """Build the routing agent. ``model`` is injectable for offline tests."""
     settings = settings or get_settings()
     if model is None:
@@ -151,7 +155,9 @@ def build_agent(model: Model | None = None, settings: Settings | None = None) ->
         if not results:
             return _NO_CONTEXT
         ctx.deps.trace.contexts.extend(r.text for r in results)
-        ctx.deps.trace.sources.extend(r.metadata.get("source", "Inconnue") for r in results)
+        ctx.deps.trace.sources.extend(
+            r.metadata.get("source", "Inconnue") for r in results
+        )
         # Same context block formatting as the baseline pipeline.
         return "\n\n---\n\n".join(
             f"Source: {r.metadata.get('source', 'Inconnue')} (Score: {r.score:.1f}%)\n"
@@ -167,7 +173,9 @@ def build_agent(model: Model | None = None, settings: Settings | None = None) ->
         ctx.deps.trace.tools_used.add("sql")
         if result.error:
             return f"La requête SQL a échoué : {result.error}"
-        ctx.deps.trace.contexts.append(f"Requête SQL : {result.query}\nRésultat : {result.result}")
+        ctx.deps.trace.contexts.append(
+            f"Requête SQL : {result.query}\nRésultat : {result.result}"
+        )
         ctx.deps.trace.sources.append(f"SQL: {result.query}")
         return f"Requête exécutée : {result.query}\nRésultat : {result.result}"
 
